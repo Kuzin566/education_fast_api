@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Body, FastAPI, HTTPException, Request, status
+from fastapi import Body, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -49,14 +49,18 @@ async def get_message(request: Request, message_id: int) -> HTMLResponse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
 
 
-@app.post(path="/message", status_code=status.HTTP_201_CREATED)
-async def create_message(message: Message) -> str:
+@app.post("/", status_code=status.HTTP_201_CREATED)
+async def create_message(request: Request, message: str = Form()) -> HTMLResponse:
     if messages_db:
-        message.id = max(messages_db, key=lambda m: m.id).id + 1
+        max_id_message = max(messages_db, key=lambda m: m.id).id + 1
     else:
-        message.id = 0
-    messages_db.append(message)
-    return f"Message created! ID: {message.id}"
+        max_id_message = 0
+    messages_db.append(Message(id=max_id_message, text=message))
+    return templates.TemplateResponse(request,
+                                      "message.html",
+                                      {
+                                          "messages": messages_db
+                                      })
 
 
 @app.put(path="/message/{message_id}")
