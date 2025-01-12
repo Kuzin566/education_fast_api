@@ -14,7 +14,3 @@ class Message(BaseModel):
     text: str = None
     item: Item
 
-
-a = Message
-a.id = 5
-print(a.dict)
